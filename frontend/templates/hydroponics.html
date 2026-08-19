@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Hydroponics{% endblock %}
+{% block page_title %}Hydroponic Module{% endblock %}
+{% block page_subtitle %}Acclimatization & Nutrient Management{% endblock %}
+
+{% block content %}
+<!-- Gauges Row -->
+<div class="grid-3">
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="hydroGaugePH"></div>
+            <div class="gauge-label">pH Level</div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="hydroGaugeEC"></div>
+            <div class="gauge-label">Electrical Conductivity</div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="hydroGaugeDO"></div>
+            <div class="gauge-label">Dissolved Oxygen</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Parameters -->
+<div class="grid-2 section-gap">
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-chart-area"></i> pH & EC Trends (24h)</div>
+            <span class="card-badge success">Live</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="hydroChart"></canvas>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-sliders"></i> Nutrient Parameters</div>
+            <span class="card-badge info">Auto-Regulated</span>
+        </div>
+
+        <div class="hydro-param">
+            <div class="hydro-param-info">
+                <div class="hydro-param-icon" style="background:rgba(45,212,168,0.12);color:var(--accent-primary);">
+                    <i class="fas fa-droplet"></i>
+                </div>
+                <div>
+                    <div class="hydro-param-name">pH Level</div>
+                    <div class="hydro-param-range">Optimal: 5.5 – 6.5</div>
+                </div>
+            </div>
+            <div class="hydro-param-value" id="hydro-ph-value">—</div>
+        </div>
+
+        <div class="hydro-param">
+            <div class="hydro-param-info">
+                <div class="hydro-param-icon" style="background:rgba(59,130,246,0.12);color:var(--status-info);">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="hydro-param-name">EC (Conductivity)</div>
+                    <div class="hydro-param-range">Optimal: 1.5 – 2.5 mS/cm</div>
+                </div>
+            </div>
+            <div class="hydro-param-value" id="hydro-ec-value">—</div>
+        </div>
+
+        <div class="hydro-param">
+            <div class="hydro-param-info">
+                <div class="hydro-param-icon" style="background:rgba(245,158,11,0.12);color:var(--status-warning);">
+                    <i class="fas fa-wind"></i>
+                </div>
+                <div>
+                    <div class="hydro-param-name">Dissolved Oxygen</div>
+                    <div class="hydro-param-range">Optimal: 6.0 – 8.0 mg/L</div>
+                </div>
+            </div>
+            <div class="hydro-param-value" id="hydro-dissolved_oxygen-value">—</div>
+        </div>
+
+        <div class="hydro-param">
+            <div class="hydro-param-info">
+                <div class="hydro-param-icon" style="background:rgba(239,68,68,0.12);color:var(--status-danger);">
+                    <i class="fas fa-temperature-half"></i>
+                </div>
+                <div>
+                    <div class="hydro-param-name">Water Temperature</div>
+                    <div class="hydro-param-range">Optimal: 20 – 24 °C</div>
+                </div>
+            </div>
+            <div class="hydro-param-value" id="hydro-water_temperature-value">—</div>
+        </div>
+
+        <div class="hydro-param">
+            <div class="hydro-param-info">
+                <div class="hydro-param-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">
+                    <i class="fas fa-faucet-drip"></i>
+                </div>
+                <div>
+                    <div class="hydro-param-name">Flow Rate</div>
+                    <div class="hydro-param-range">Optimal: 2.0 – 3.0 L/min</div>
+                </div>
+            </div>
+            <div class="hydro-param-value" id="hydro-flow_rate-value">—</div>
+        </div>
+    </div>
+</div>
+
+<!-- Acclimatization Progress -->
+<div class="grid-2 section-gap">
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-stairs"></i> Acclimatization Protocol</div>
+            <span class="card-badge success">In Progress</span>
+        </div>
+
+        <div class="acclim-timeline">
+            <div class="acclim-step">
+                <div class="acclim-dot done"><i class="fas fa-check"></i></div>
+                <div class="acclim-info">
+                    <div class="acclim-title">Stage 1: Initial Transfer</div>
+                    <div class="acclim-desc">Plantlets moved from agar to hydroponic solution (¼ strength MS) — Day 1-3</div>
+                </div>
+            </div>
+            <div class="acclim-step">
+                <div class="acclim-dot done"><i class="fas fa-check"></i></div>
+                <div class="acclim-info">
+                    <div class="acclim-title">Stage 2: Humidity Reduction</div>
+                    <div class="acclim-desc">Gradual humidity decrease from 95% to 70% — Day 4-10</div>
+                </div>
+            </div>
+            <div class="acclim-step">
+                <div class="acclim-dot active">3</div>
+                <div class="acclim-info">
+                    <div class="acclim-title">Stage 3: Nutrient Strengthening</div>
+                    <div class="acclim-desc">Increase nutrient solution to ½ strength — Day 11-17</div>
+                </div>
+            </div>
+            <div class="acclim-step">
+                <div class="acclim-dot">4</div>
+                <div class="acclim-info">
+                    <div class="acclim-title">Stage 4: Light Acclimatization</div>
+                    <div class="acclim-desc">Gradual increase to full sunlight exposure — Day 18-24</div>
+                </div>
+            </div>
+            <div class="acclim-step">
+                <div class="acclim-dot">5</div>
+                <div class="acclim-info">
+                    <div class="acclim-title">Stage 5: Field Transfer</div>
+                    <div class="acclim-desc">Final hardening and transfer to soil/field conditions — Day 25-30</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-clock-rotate-left"></i> Auto-Adjustment History</div>
+        </div>
+
+        <div class="log-entry">
+            <div class="log-status completed"></div>
+            <div class="log-time">11:42</div>
+            <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);">
+                pH corrected from 6.7 → 6.0 (added 2mL pH Down)
+            </div>
+        </div>
+        <div class="log-entry">
+            <div class="log-status completed"></div>
+            <div class="log-time">10:15</div>
+            <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);">
+                EC boosted from 1.3 → 1.8 mS/cm (nutrient top-up 150mL)
+            </div>
+        </div>
+        <div class="log-entry">
+            <div class="log-status completed"></div>
+            <div class="log-time">08:30</div>
+            <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);">
+                Water temp stabilized at 22°C (heater activated 12min)
+            </div>
+        </div>
+        <div class="log-entry">
+            <div class="log-status completed"></div>
+            <div class="log-time">06:00</div>
+            <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);">
+                Dissolved oxygen maintained at 7.2 mg/L (air pump cycled)
+            </div>
+        </div>
+        <div class="log-entry">
+            <div class="log-status completed"></div>
+            <div class="log-time">03:45</div>
+            <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);">
+                Humidity reduced from 82% → 75% (vent opened 8min)
+            </div>
+        </div>
+        <div class="log-entry">
+            <div class="log-status completed"></div>
+            <div class="log-time">01:20</div>
+            <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);">
+                Flow rate adjusted to 2.5 L/min (pump speed calibrated)
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', initHydroponics);
+</script>
+{% endblock %}

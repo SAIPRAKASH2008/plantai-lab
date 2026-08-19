@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}System Overview — Real-time Monitoring{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="grid-4">
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fas fa-vial"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Active Vessels</div>
+                <div class="stat-value" id="statActiveVessels">—/—</div>
+                <div class="stat-change up"><i class="fas fa-arrow-up"></i> 2 new this week</div>
+            </div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Avg Health Score</div>
+                <div class="stat-value" id="statAvgHealth">—%</div>
+                <div class="stat-change up"><i class="fas fa-arrow-up"></i> +1.2% from yesterday</div>
+            </div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon amber">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Active Alerts</div>
+                <div class="stat-value" id="statAlerts">—</div>
+                <div class="stat-change down"><i class="fas fa-arrow-down"></i> 1 critical</div>
+            </div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon teal">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">AI Recommendations</div>
+                <div class="stat-value" id="statAIRecs">—</div>
+                <div class="stat-change up"><i class="fas fa-bolt"></i> Engine v2.4.1</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sensor Gauges -->
+<div class="section-gap">
+    <div class="section-title"><i class="fas fa-gauge-high"></i> Environmental Sensors — Tissue Culture Chambers</div>
+</div>
+<div class="grid-4">
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="gaugeTemp"></div>
+            <div class="gauge-label">Temperature</div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="gaugeHumidity"></div>
+            <div class="gauge-label">Humidity</div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="gaugeLight"></div>
+            <div class="gauge-label">Light Intensity</div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="gauge-container">
+            <div id="gaugeCO2"></div>
+            <div class="gauge-label">CO₂ Level</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Recommendations -->
+<div class="grid-2-1 section-gap">
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-chart-area"></i> Environmental Trends (24h)</div>
+            <span class="card-badge success">Live</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="dashboardChart"></canvas>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-robot"></i> AI Recommendations</div>
+            <span class="card-badge info">Auto</span>
+        </div>
+        <div id="recsContainer" style="max-height:320px;overflow-y:auto;">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading recommendations...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+{% endblock %}

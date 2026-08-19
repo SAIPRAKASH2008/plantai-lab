@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0f0d">
+    <meta name="color-scheme" content="dark">
+    <title>PlantAI Lab Locked</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+    <div class="login-shell">
+        <div class="login-panel lock-panel">
+            <div class="login-brand">
+                <div class="login-brand-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="login-brand-text">
+                    <strong>System Locked</strong>
+                    <span>Face Verification</span>
+                </div>
+            </div>
+
+            <h1 class="login-title">Authentication required</h1>
+            <p class="login-subtitle">The lab monitor is locked for security. Verify identity to continue.</p>
+
+            <div class="face-preview" id="facePreview">
+                <div class="face-camera-glow"></div>
+                <i class="fas fa-camera"></i>
+            </div>
+
+            <div class="face-status" id="faceStatus">Waiting for verified face match...</div>
+
+            <div class="login-form face-form">
+                <div class="login-field">
+                    <label for="faceUsername">Username</label>
+                    <input class="login-input" id="faceUsername" type="text" value="admin" placeholder="admin">
+                </div>
+
+                <div class="login-field">
+                    <label for="facePassword">Password</label>
+                    <input class="login-input" id="facePassword" type="password" value="plantai" placeholder="plantai">
+                </div>
+
+                <button class="login-button" id="verifyFaceBtn" type="button">Verify Face & Unlock</button>
+            </div>
+
+            <div class="login-meta">Use the camera verification flow for secure re-entry</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+    <script>
+        const verifyFaceBtn = document.getElementById('verifyFaceBtn');
+        const faceStatus = document.getElementById('faceStatus');
+
+        function getCameraCapture() {
+            const video = document.createElement('video');
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+
+            return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+                .then((stream) => {
+                    video.srcObject = stream;
+                    return new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            const context = canvas.getContext('2d');
+                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                            stream.getTracks().forEach((track) => track.stop());
+                            resolve(dataUrl);
+                        };
+                        video.play();
+                    });
+                });
+        }
+
+        const verifyFace = async () => {
+            const username = document.getElementById('faceUsername').value.trim();
+            const password = document.getElementById('facePassword').value;
+
+            faceStatus.textContent = 'Authenticating face and credentials...';
+            faceStatus.classList.add('active');
+
+            try {
+                const faceImage = await getCameraCapture();
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                formData.append('face_image', faceImage);
+
+                const response = await fetch('{{ url_for("api_facial_login") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    faceStatus.textContent = 'Face verified. Unlocking system...';
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '{{ url_for("dashboard") }}';
+                    }, 700);
+                } else {
+                    faceStatus.textContent = data.error || 'Face verification failed.';
+                    faceStatus.classList.remove('active');
+                }
+            } catch (error) {
+                faceStatus.textContent = 'Verification failed. Please retry.';
+                faceStatus.classList.remove('active');
+            }
+        };
+
+        verifyFaceBtn.addEventListener('click', verifyFace);
+    </script>
+</body>
+</html>

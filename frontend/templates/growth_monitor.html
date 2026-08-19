@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Growth Monitor{% endblock %}
+{% block page_title %}Growth Monitor{% endblock %}
+{% block page_subtitle %}Culture Vessel Analytics & AI Image Analysis{% endblock %}
+
+{% block content %}
+<!-- Growth Chart & Anomaly Alerts -->
+<div class="grid-2-1">
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-chart-line"></i> Average Growth Rate Trend</div>
+            <span class="card-badge success">Live</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-shield-virus"></i> Anomaly Alerts</div>
+            <span class="card-badge warning" id="alertBadge">AI Scan</span>
+        </div>
+        <div id="anomalyAlerts" style="max-height:280px;overflow-y:auto;">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Scanning cultures...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live AI Plant Computer Vision Monitor -->
+<div class="glass-card section-gap">
+    <div class="card-header">
+        <div class="card-title"><i class="fas fa-camera"></i> Live AI Optical Plant Camera & Computer Vision Stream</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <select class="form-select" id="visionVesselSelect" style="width:160px;padding:4px 8px;font-size:0.78rem;">
+                <option value="V-001">Camera 1 (V-001)</option>
+                <option value="V-002">Camera 2 (V-002)</option>
+                <option value="V-003">Camera 3 (V-003)</option>
+                <option value="V-004">Camera 4 (V-004)</option>
+                <option value="V-006">Camera 6 (V-006)</option>
+                <option value="V-007">Camera 7 (V-007)</option>
+                <option value="V-008">Camera 8 (V-008)</option>
+                <option value="V-011">Camera 11 (V-011)</option>
+            </select>
+            <span class="card-badge success"><i class="fas fa-circle-dot fa-beat" style="font-size:0.6rem;margin-right:4px;"></i> LIVE 30 FPS</span>
+        </div>
+    </div>
+
+    <div class="grid-2-1">
+        <!-- Vision Viewport Container -->
+        <div class="plant-camera-viewport" id="plantCameraViewport">
+            <canvas id="plantVisionCanvas" width="640" height="360"></canvas>
+            <div class="camera-hud-overlay">
+                <div class="hud-top">
+                    <span class="hud-tag"><i class="fas fa-video text-accent"></i> STREAM: OPTICAL-CAM-01</span>
+                    <span class="hud-tag" id="hudTimestamp">13:40:00.000</span>
+                </div>
+                <div class="hud-scanner-line"></div>
+                <div class="hud-bottom">
+                    <div class="hud-legend">
+                        <span class="legend-item shoot"><i class="fas fa-square"></i> Shoot Tip</span>
+                        <span class="legend-item root"><i class="fas fa-square"></i> Root Primordium</span>
+                        <span class="legend-item anomaly"><i class="fas fa-square"></i> Contamination Alert</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vision Analytics Panel -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="glass-card" style="padding:14px;background:rgba(10,20,15,0.6);">
+                <div class="stat-label">Detected Shoot Count</div>
+                <div class="stat-value" id="visionShootCount" style="color:var(--accent-primary);">14</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;"><i class="fas fa-arrow-up text-success"></i> +3.2x multiplication rate</div>
+            </div>
+
+            <div class="glass-card" style="padding:14px;background:rgba(10,20,15,0.6);">
+                <div class="stat-label">Est. Root Primordia Length</div>
+                <div class="stat-value" id="visionRootLength" style="color:var(--status-info);">24.8 <span style="font-size:0.9rem;font-weight:400;">mm</span></div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Root initiation active</div>
+            </div>
+
+            <div class="glass-card" style="padding:14px;background:rgba(10,20,15,0.6);">
+                <div class="stat-label">NDVI Vegetation Index</div>
+                <div class="stat-value" id="visionNDVI" style="color:var(--status-success);">0.88</div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">High chlorophyll density</div>
+            </div>
+
+            <div class="glass-card" style="padding:14px;background:rgba(10,20,15,0.6);">
+                <div class="stat-label">Leaf Surface Area</div>
+                <div class="stat-value" id="visionLeafArea">340.5 <span style="font-size:0.9rem;font-weight:400;">mm²</span></div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Plantlet height: <span id="visionHeight">48.2</span> mm</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stage Distribution Summary -->
+<div class="section-gap">
+    <div class="section-title"><i class="fas fa-layer-group"></i> Growth Stage Pipeline</div>
+</div>
+<div class="grid-4" style="grid-template-columns: repeat(5, 1fr);">
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:1.5rem;color:var(--accent-tertiary);margin-bottom:8px;"><i class="fas fa-syringe"></i></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Inoculation</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-top:4px;" id="stageCount0">—</div>
+    </div>
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:1.5rem;color:var(--status-warning);margin-bottom:8px;"><i class="fas fa-circle-nodes"></i></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Callus</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-top:4px;" id="stageCount1">—</div>
+    </div>
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:1.5rem;color:var(--status-success);margin-bottom:8px;"><i class="fas fa-leaf"></i></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Shoot</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-top:4px;" id="stageCount2">—</div>
+    </div>
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:1.5rem;color:var(--accent-primary);margin-bottom:8px;"><i class="fas fa-arrow-down-long"></i></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Root</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-top:4px;" id="stageCount3">—</div>
+    </div>
+    <div class="glass-card" style="text-align:center;">
+        <div style="font-size:1.5rem;color:var(--status-info);margin-bottom:8px;"><i class="fas fa-sun"></i></div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Hardening</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--text-primary);margin-top:4px;" id="stageCount4">—</div>
+    </div>
+</div>
+
+<!-- Quick Vessel Registration with Live Datetime Input -->
+<div class="glass-card section-gap">
+    <div class="card-header">
+        <div class="card-title"><i class="fas fa-plus-circle"></i> Register New Culture Vessel</div>
+        <span class="card-badge info">Live Datetime Logging</span>
+    </div>
+    <form id="newVesselForm" onsubmit="registerNewVessel(event)" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)) gap:12px;align-items:end;">
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Plant Species</label>
+            <input type="text" class="form-input" id="vesselSpeciesInput" placeholder="e.g. Solanum tuberosum" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Common Name</label>
+            <input type="text" class="form-input" id="vesselCommonNameInput" placeholder="e.g. Potato" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Development Stage</label>
+            <select class="form-select" id="vesselStageSelect">
+                <option value="Inoculation">Inoculation</option>
+                <option value="Callus Induction">Callus Induction</option>
+                <option value="Shoot Multiplication">Shoot Multiplication</option>
+                <option value="Root Regeneration">Root Regeneration</option>
+                <option value="Hardening">Hardening</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Inoculation Date & Time</label>
+            <input type="datetime-local" class="form-input" id="vesselInoculationDatetime" required>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                <i class="fas fa-seedling"></i> Register Vessel
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Vessel Grid -->
+<div class="section-gap">
+    <div class="section-title"><i class="fas fa-grip"></i> Culture Vessels</div>
+</div>
+<div class="vessel-grid" id="vesselGrid">
+    <div class="empty-state" style="grid-column:1/-1;">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Loading vessel data...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initGrowthMonitor();
+        // Update stage counts
+        const vessels = await fetchAPI('/api/growth-data');
+        if (vessels) {
+            const stages = ['Inoculation', 'Callus Induction', 'Shoot Multiplication', 'Root Regeneration', 'Hardening'];
+            stages.forEach((stage, i) => {
+                const count = vessels.filter(v => v.stage === stage).length;
+                const el = document.getElementById(`stageCount${i}`);
+                if (el) el.textContent = count;
+            });
+        }
+    });
+</script>
+{% endblock %}

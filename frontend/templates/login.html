@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0f0d">
+    <meta name="color-scheme" content="dark">
+    <title>PlantAI Lab Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+    <div class="login-shell">
+        <div class="login-panel">
+            <div class="login-brand">
+                <div class="login-brand-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="login-brand-text">
+                    <strong>PlantAI</strong>
+                    <span>Lab System</span>
+                </div>
+            </div>
+
+            <h1 class="login-title">Welcome back</h1>
+            <p class="login-subtitle">Sign in to access the cultivation monitor</p>
+
+            {% if error %}
+                <div class="login-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" class="login-form">
+                <div class="login-field">
+                    <label for="username">Username</label>
+                    <input class="login-input" id="username" name="username" type="text" placeholder="Enter username" required>
+                </div>
+
+                <div class="login-field">
+                    <label for="password">Password</label>
+                    <input class="login-input" id="password" name="password" type="password" placeholder="Enter password" required>
+                </div>
+
+                <button class="login-button" type="submit">Sign In</button>
+            </form>
+
+            <div class="login-divider">
+                <span>or use facial verification</span>
+            </div>
+
+            <div class="face-login-box">
+                <video id="faceLoginVideo" autoplay playsinline muted></video>
+                <div class="face-overlay"></div>
+            </div>
+
+            <button type="button" class="login-button secondary" id="faceLoginBtn">Enable Camera & Face Login</button>
+
+            <div class="login-meta">Secure access for monitored lab operations</div>
+            <div class="login-credentials">
+                <strong>Demo accounts:</strong><br>
+                admin / plantai<br>
+                operator / culture123
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+    <script>
+        const video = document.getElementById('faceLoginVideo');
+        const faceLoginBtn = document.getElementById('faceLoginBtn');
+
+        function captureFaceImage() {
+            if (!video || !video.videoWidth || !video.videoHeight) {
+                return null;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+
+        async function startFaceLoginCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('This browser does not support camera-based face login.');
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.play();
+                faceLoginBtn.textContent = 'Face Login Ready';
+            } catch (error) {
+                alert('Camera access denied. You can still use the username and password login.');
+            }
+        }
+
+        async function submitFaceLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                return;
+            }
+
+            if (!video.srcObject || !video.videoWidth) {
+                alert('Please enable the camera before using face login.');
+                return;
+            }
+
+            const imageData = captureFaceImage();
+            const form = new FormData();
+            form.append('username', username);
+            form.append('password', password);
+            form.append('face_image', imageData);
+
+            const response = await fetch('{{ url_for("api_facial_login") }}', {
+                method: 'POST',
+                body: form
+            });
+
+            const data = await response.json();
+            if (response.ok && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                alert(data.error || 'Face verification failed.\nTry using username/password sign-in instead.');
+            }
+        }
+
+        faceLoginBtn.addEventListener('click', startFaceLoginCamera);
+        faceLoginBtn.addEventListener('dblclick', submitFaceLogin);
+    </script>
+</body>
+</html>

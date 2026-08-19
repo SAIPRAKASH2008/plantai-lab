@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#0a0f0d">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="AI-Based Accelerated Plant Tissue Culture and Hydroponics System with Automated Media Dispensing and Networked Monitoring">
+    <title>{% block title %}PlantAI Lab{% endblock %} — AI Tissue Culture & Hydroponics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Prevent zoom on iOS when tapping inputs */
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="datetime-local"],
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-name">PlantAI</span>
+                    <span class="logo-sub">Lab System</span>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" id="nav-dashboard">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/media-dispensing" class="nav-link {% if active_page == 'media' %}active{% endif %}" id="nav-media">
+                    <i class="fas fa-flask"></i>
+                    <span>Media Dispensing</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/growth-monitor" class="nav-link {% if active_page == 'growth' %}active{% endif %}" id="nav-growth">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Growth Monitor</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/hydroponics" class="nav-link {% if active_page == 'hydroponics' %}active{% endif %}" id="nav-hydroponics">
+                    <i class="fas fa-water"></i>
+                    <span>Hydroponics</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/collaboration" class="nav-link {% if active_page == 'collaboration' %}active{% endif %}" id="nav-collab">
+                    <i class="fas fa-network-wired"></i>
+                    <span>Collaboration</span>
+                </a>
+            </li>
+            {% if current_user and current_user.role == 'admin' %}
+            <li class="nav-item nav-divider"></li>
+            <li class="nav-item">
+                <a href="/admin/users" class="nav-link {% if active_page == 'admin_users' %}active{% endif %}" id="nav-admin">
+                    <i class="fas fa-users-gear"></i>
+                    <span>User Management</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="ai-status">
+                <div class="ai-pulse"></div>
+                <span>AI Engine Active</span>
+            </div>
+            <div class="version-tag">v2.4.1</div>
+            <a href="{{ url_for('logout') }}" class="logout-link">
+                <i class="fas fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
+            <button type="button" class="logout-link lock-button" id="lockSystemBtn">
+                <i class="fas fa-lock"></i>
+                <span>Lock System</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header Bar -->
+        <header class="top-bar">
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="page-title">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <p class="page-subtitle">{% block page_subtitle %}System Overview{% endblock %}</p>
+            </div>
+            <div class="top-bar-actions">
+                <div class="status-indicators">
+                    <div class="status-dot operational" title="Tissue Culture: Operational">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <div class="status-dot operational" title="Hydroponics: Operational">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <div class="status-dot active" title="AI Engine: Active">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                </div>
+                <div class="notification-bell" id="notificationBell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notifBadge">0</span>
+                </div>
+                <div class="datetime-widget" id="datetimeWidget">
+                    <div class="datetime-display">
+                        <i class="fas fa-calendar-alt text-accent"></i>
+                        <span class="date-text" id="headerDate"></span>
+                        <i class="fas fa-clock text-accent" style="margin-left:6px;"></i>
+                        <span class="clock-text" id="headerClock"></span>
+                    </div>
+                    <div class="datetime-picker-wrapper">
+                        <input type="datetime-local" id="liveDateTimePicker" class="datetime-input" title="Select or Override System Date & Time">
+                        <button class="btn-live-toggle" id="liveResetBtn" title="Reset to Live Current Time">
+                            <i class="fas fa-rotate"></i> Live
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Notification Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        (() => {
+            const lockSystem = () => {
+                fetch('{{ url_for("api_lock_system") }}', { method: 'POST' })
+                    .then(() => {
+                        window.location.href = '{{ url_for("lock_screen") }}';
+                    })
+                    .catch(() => {
+                        window.location.href = '{{ url_for("lock_screen") }}';
+                    });
+            };
+
+            const lockBtn = document.getElementById('lockSystemBtn');
+            if (lockBtn) {
+                lockBtn.addEventListener('click', lockSystem);
+            }
+
+            let inactivityTimer = null;
+            const resetTimer = () => {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => {
+                    lockSystem();
+                }, 180000);
+            };
+
+            ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(eventName => {
+                document.addEventListener(eventName, resetTimer, { passive: true });
+            });
+
+            resetTimer();
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

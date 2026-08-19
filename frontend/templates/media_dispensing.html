@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Media Dispensing{% endblock %}
+{% block page_title %}AI Media Dispensing{% endblock %}
+{% block page_subtitle %}Automated Culture Media Formulation & Dispensing{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+    <!-- Control Panel -->
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-sliders"></i> Formulation Controls</div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Plant Species</label>
+            <select class="form-select" id="speciesSelect">
+                {% for sp in species_list %}
+                <option value="{{ sp.scientific_name }}">{{ sp.common_name }} ({{ sp.scientific_name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Developmental Stage</label>
+            <select class="form-select" id="stageSelect">
+                <option value="callus_induction">Callus Induction</option>
+                <option value="shoot_multiplication">Shoot Multiplication</option>
+                <option value="root_regeneration">Root Regeneration</option>
+                <option value="hardening">Hardening / Acclimatization</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Volume (mL)</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <input type="range" class="range-slider" id="volumeSlider" min="100" max="2000" value="500" step="50"
+                    oninput="document.getElementById('volumeDisplay').textContent = this.value + ' mL'">
+                <span class="range-value" id="volumeDisplay">500 mL</span>
+            </div>
+        </div>
+
+        <!-- Dispensing Animation -->
+        <div class="dispense-animation">
+            <div class="dispense-wave"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;text-align:center;">
+                <i class="fas fa-flask" style="font-size:1.5rem;color:var(--accent-primary);opacity:0.7;"></i>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="dispenseMedia()" style="width:100%;justify-content:center;" id="dispenseBtn">
+            <i class="fas fa-play"></i> Dispense Media
+        </button>
+    </div>
+
+    <!-- AI Optimized Formulation -->
+    <div>
+        <div class="glass-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-brain"></i> AI-Optimized Growth Regulators</div>
+                <span class="card-badge success">Optimized</span>
+            </div>
+
+            <div class="formulation-grid" id="formulationGrid">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Calculating optimal formulation...</p>
+                </div>
+            </div>
+
+            <div style="margin-top:16px;">
+                <div class="form-label" style="margin-bottom:8px;">AI Confidence</div>
+                <div class="confidence-meter">
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill" style="width:0%"></div>
+                    </div>
+                    <div class="confidence-value" id="confidenceValue">—%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card section-gap">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-temperature-half"></i> Environmental Recommendations</div>
+            </div>
+            <div class="formulation-grid" id="envRecommendations">
+                <div class="empty-state">
+                    <p>Select species and stage above</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Notes & Dispensing Log -->
+<div class="grid-2 section-gap">
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-lightbulb"></i> AI Optimization Notes</div>
+        </div>
+        <div id="aiNotes">
+            <div class="empty-state">
+                <p>Notes will appear after optimization</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-list-check"></i> Dispensing Log</div>
+            <span class="card-badge info">History</span>
+        </div>
+        <div id="dispensingLog" style="max-height:300px;overflow-y:auto;">
+            <div class="empty-state">
+                <i class="fas fa-flask"></i>
+                <p>No dispensing history yet</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', initMediaDispensing);
+</script>
+{% endblock %}

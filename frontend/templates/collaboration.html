@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Collaboration{% endblock %}
+{% block page_title %}Collaboration Hub{% endblock %}
+{% block page_subtitle %}Networked Monitoring & Protocol Sharing{% endblock %}
+
+{% block content %}
+<!-- Connected Labs & Activity -->
+<div class="grid-2">
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-globe"></i> Connected Labs</div>
+            <span class="card-badge success" id="labsOnlineCount">—</span>
+        </div>
+        <div id="labsContainer" style="display:flex;flex-direction:column;gap:8px;max-height:350px;overflow-y:auto;">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Connecting to network...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-stream"></i> Network Activity</div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-avatar">AS</div>
+            <div class="activity-content">
+                <div class="activity-text"><strong>Dr. A. Sharma</strong> updated the Potato Micropropagation protocol — multiplication rate improved to 14×/cycle</div>
+                <div class="activity-time">12 minutes ago</div>
+            </div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-avatar">KT</div>
+            <div class="activity-content">
+                <div class="activity-text"><strong>Prof. K. Tanaka</strong> shared image analysis results for Dendrobium meristem cultures — 96% virus-free confirmation</div>
+                <div class="activity-time">1 hour ago</div>
+            </div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-avatar">MO</div>
+            <div class="activity-content">
+                <div class="activity-text"><strong>Dr. M. Okonkwo</strong> reported contamination incident in banana cultures — isolate protocol activated successfully</div>
+                <div class="activity-time">3 hours ago</div>
+            </div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-avatar">LG</div>
+            <div class="activity-content">
+                <div class="activity-text"><strong>Dr. L. García</strong> completed 500-plantlet batch of Stevia using the shared nodal cutting protocol</div>
+                <div class="activity-time">5 hours ago</div>
+            </div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-avatar">FM</div>
+            <div class="activity-content">
+                <div class="activity-text"><strong>Dr. F. Müller</strong> published new thermotherapy parameters for Rosa virus elimination — 38°C for 4 weeks</div>
+                <div class="activity-time">Yesterday</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Network Stats -->
+<div class="grid-4 section-gap">
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-flask"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Total Cultures</div>
+                <div class="stat-value">194</div>
+                <div class="stat-change up"><i class="fas fa-arrow-up"></i> Across all labs</div>
+            </div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Active Researchers</div>
+                <div class="stat-value">36</div>
+                <div class="stat-change up"><i class="fas fa-circle"></i> 28 online now</div>
+            </div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon amber"><i class="fas fa-file-lines"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Shared Protocols</div>
+                <div class="stat-value">47</div>
+                <div class="stat-change up"><i class="fas fa-arrow-up"></i> 5 new this month</div>
+            </div>
+        </div>
+    </div>
+    <div class="glass-card">
+        <div class="stat-card">
+            <div class="stat-icon teal"><i class="fas fa-seedling"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Species Covered</div>
+                <div class="stat-value">23</div>
+                <div class="stat-change up"><i class="fas fa-leaf"></i> 9 families</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shared Protocol Library -->
+<div class="section-gap">
+    <div class="section-title"><i class="fas fa-book-open"></i> Shared Protocol Library</div>
+</div>
+<div class="grid-3" id="protocolsContainer">
+    <div class="empty-state" style="grid-column:1/-1;">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Loading protocols...</p>
+    </div>
+</div>
+
+<!-- Messaging Panel -->
+<div class="glass-card section-gap">
+    <div class="card-header">
+        <div class="card-title"><i class="fas fa-comments"></i> Quick Message</div>
+        <span class="card-badge info">All Labs</span>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div style="flex:1;">
+            <input type="text" class="form-input" id="messageInput" placeholder="Type a message to broadcast to all connected labs..." 
+                onkeypress="if(event.key==='Enter')sendMessage()">
+        </div>
+        <button class="btn btn-primary" onclick="sendMessage()" id="sendMessageBtn">
+            <i class="fas fa-paper-plane"></i> Send
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initCollaboration();
+        // Update online count
+        const labs = await fetchAPI('/api/connected-labs');
+        if (labs) {
+            const online = labs.filter(l => l.status === 'online').length;
+            const badge = document.getElementById('labsOnlineCount');
+            if (badge) badge.textContent = `${online}/${labs.length} Online`;
+        }
+    });
+
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        if (!input || !input.value.trim()) return;
+        showToast(`Message broadcast to all labs: "${input.value.trim()}"`, 'success');
+        input.value = '';
+    }
+</script>
+{% endblock %}

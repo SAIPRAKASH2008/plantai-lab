@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1 class="admin-title">User Management</h1>
+        <p class="admin-subtitle">Manage lab personnel, roles, and permissions</p>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-header">
+            <h2 class="section-title">Active Users</h2>
+            <a href="{{ url_for('register') }}" class="action-button">+ Add User</a>
+        </div>
+
+        {% if users %}
+            <div class="users-table-wrapper">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Role</th>
+                            <th>Biometric Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            <tr class="user-row">
+                                <td class="user-username">
+                                    <span class="username-badge">{{ user.username }}</span>
+                                </td>
+                                <td>{{ user.full_name }}</td>
+                                <td>
+                                    <div class="role-selector">
+                                        <select class="role-select" data-username="{{ user.username }}" {% if user.username == current_user.username %}disabled{% endif %}>
+                                            <option value="operator" {% if user.role == 'operator' %}selected{% endif %}>Operator</option>
+                                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge {% if user.enrollment_status == 'enrolled' %}enrolled{% else %}pending{% endif %}">
+                                        {% if user.enrollment_status == 'enrolled' %}
+                                            <i class="fas fa-check-circle"></i> Enrolled
+                                        {% else %}
+                                            <i class="fas fa-clock"></i> Pending
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="user-created">{{ user.created_at[:10] }}</td>
+                                <td class="user-actions">
+                                    {% if user.username != current_user.username %}
+                                        <button class="delete-btn" data-username="{{ user.username }}">Delete</button>
+                                    {% else %}
+                                        <span class="self-badge">You</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <script>
+                document.querySelectorAll('.role-select').forEach((select) => {
+                    select.addEventListener('change', async (e) => {
+                        const username = e.target.dataset.username;
+                        const newRole = e.target.value;
+
+                        try {
+                            const response = await fetch(`/api/admin/users/${username}/role`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ role: newRole })
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                alert(data.message);
+                            } else {
+                                const error = await response.json();
+                                alert(error.error || 'Update failed');
+                                e.target.value = e.target.options[0].value;
+                            }
+                        } catch (err) {
+                            alert('Error updating user role');
+                            location.reload();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.delete-btn').forEach((btn) => {
+                    btn.addEventListener('click', async (e) => {
+                        const username = e.target.dataset.username;
+                        if (!confirm(`Delete user ${username}? This action cannot be undone.`)) {
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`/api/admin/users/${username}`, {
+                                method: 'DELETE'
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                alert(data.message);
+                                location.reload();
+                            } else {
+                                const error = await response.json();
+                                alert(error.error || 'Delete failed');
+                            }
+                        } catch (err) {
+                            alert('Error deleting user');
+                        }
+                    });
+                });
+            </script>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>No users found</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.admin-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    margin-bottom: 30px;
+}
+
+.admin-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #f8f9fa;
+    margin-bottom: 8px;
+}
+
+.admin-subtitle {
+    color: #8a9aa0;
+    font-size: 14px;
+}
+
+.admin-section {
+    background: rgba(26, 35, 31, 0.6);
+    border: 1px solid rgba(45, 212, 168, 0.12);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #f8f9fa;
+}
+
+.action-button {
+    background: linear-gradient(135deg, #2dd4a4 0%, #1fab89 100%);
+    color: #0a0f0d;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+}
+
+.users-table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(45, 212, 168, 0.1);
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.users-table thead {
+    background: rgba(45, 212, 168, 0.08);
+    border-bottom: 2px solid rgba(45, 212, 168, 0.15);
+}
+
+.users-table th {
+    padding: 12px 16px;
+    text-align: left;
+    color: #2dd4a4;
+    font-weight: 600;
+}
+
+.users-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(45, 212, 168, 0.08);
+    color: #c6d4cf;
+}
+
+.user-row:hover {
+    background: rgba(45, 212, 168, 0.04);
+}
+
+.username-badge {
+    background: rgba(45, 212, 168, 0.1);
+    color: #2dd4a4;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.role-selector {
+    width: 100%;
+}
+
+.role-select {
+    background: rgba(45, 212, 168, 0.06);
+    border: 1px solid rgba(45, 212, 168, 0.2);
+    color: #f8f9fa;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    width: 100%;
+}
+
+.role-select:hover {
+    border-color: rgba(45, 212, 168, 0.4);
+}
+
+.role-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.enrolled {
+    background: rgba(45, 212, 168, 0.15);
+    color: #2dd4a4;
+}
+
+.status-badge.pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+}
+
+.user-created {
+    color: #8a9aa0;
+    font-size: 13px;
+}
+
+.user-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.delete-btn {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: rgba(255, 59, 48, 0.5);
+}
+
+.self-badge {
+    background: rgba(88, 198, 255, 0.1);
+    color: #58c6ff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #8a9aa0;
+}
+
+.empty-state i {
+    font-size: 48px;
+    opacity: 0.5;
+    margin-bottom: 16px;
+    display: block;
+}
+</style>
+{% endblock %}

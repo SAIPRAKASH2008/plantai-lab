@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0f0d">
+    <meta name="color-scheme" content="dark">
+    <title>PlantAI Face Enrollment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+    <div class="login-shell">
+        <div class="login-panel">
+            <div class="login-brand">
+                <div class="login-brand-icon">
+                    <i class="fas fa-face-smile"></i>
+                </div>
+                <div class="login-brand-text">
+                    <strong>Biometric</strong>
+                    <span>Face Enrollment</span>
+                </div>
+            </div>
+
+            <h1 class="login-title">Enroll Your Face</h1>
+            <p class="login-subtitle">Welcome, {{ username }}. Capture your face for secure biometric authentication.</p>
+
+            <div class="face-enrollment-box">
+                <video id="enrollmentVideo" autoplay playsinline muted></video>
+                <div class="face-overlay"></div>
+                <div class="face-status" id="enrollStatus">Ready to capture...</div>
+            </div>
+
+            <div class="enrollment-controls">
+                <button type="button" class="login-button" id="startCameraBtn">Start Camera</button>
+                <button type="button" class="login-button secondary" id="captureBtn" disabled>Capture Face</button>
+            </div>
+
+            <div class="enrollment-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-text" id="progressText">Camera access needed</p>
+            </div>
+
+            <div class="login-meta">
+                Position your face clearly in the center and ensure adequate lighting for the best results.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
+    <script>
+        const video = document.getElementById('enrollmentVideo');
+        const enrollStatus = document.getElementById('enrollStatus');
+        const startCameraBtn = document.getElementById('startCameraBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        let stream = null;
+
+        async function startCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('This browser does not support camera access.')
+                return;
+            }
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.play();
+                startCameraBtn.textContent = 'Camera Active';
+                startCameraBtn.disabled = true;
+                captureBtn.disabled = false;
+                enrollStatus.textContent = 'Camera active - ready to capture';
+                progressText.textContent = 'Position your face in the center';
+                updateProgress(25);
+            } catch (error) {
+                alert('Camera access denied. Please grant permission and try again.');
+                enrollStatus.textContent = 'Camera access denied';
+            }
+        }
+
+        function captureFaceImage() {
+            if (!video || !video.videoWidth || !video.videoHeight) {
+                alert('Video not ready.');
+                return null;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.95);
+        }
+
+        function updateProgress(percent) {
+            progressFill.style.width = percent + '%';
+        }
+
+        async function submitFaceCapture() {
+            captureBtn.disabled = true;
+            updateProgress(50);
+            progressText.textContent = 'Capturing face...';
+            enrollStatus.textContent = 'Processing...';
+
+            const imageData = captureFaceImage();
+            if (!imageData) {
+                progressText.textContent = 'Failed to capture image';
+                updateProgress(0);
+                captureBtn.disabled = false;
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('face_image', imageData);
+
+            try {
+                updateProgress(75);
+                progressText.textContent = 'Uploading face signature...';
+
+                const response = await fetch('{{ url_for("api_enroll_face") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    updateProgress(100);
+                    enrollStatus.textContent = 'Face signature captured successfully!';
+                    progressText.textContent = 'Enrollment complete - redirecting to dashboard...'
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    setTimeout(() => {
+                        window.location.href = '{{ url_for("dashboard") }}';
+                    }, 1500);
+                } else {
+                    enrollStatus.textContent = data.error || 'Face capture failed.';
+                    progressText.textContent = 'Please ensure your face is clearly visible and try again.';
+                    updateProgress(0);
+                    captureBtn.disabled = false;
+                }
+            } catch (error) {
+                enrollStatus.textContent = 'Enrollment failed. Please try again.';
+                progressText.textContent = 'Network error occurred';
+                updateProgress(0);
+                captureBtn.disabled = false;
+            }
+        }
+
+        startCameraBtn.addEventListener('click', startCamera);
+        captureBtn.addEventListener('click', submitFaceCapture);
+
+        // Request permission on load
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            progressText.textContent = 'Click "Start Camera" to begin enrollment';
+        }
+    </script>
+</body>
+</html>
